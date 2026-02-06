@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools"]
+requires = ["setuptools>=77.0.3", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [options]
@@ -8,18 +8,24 @@ packages = ["parse_broken_json"]
 
 [project]
 name = "parse_broken_json"
-version = "0.2"
+version = "0.3"
 authors = [
     {name = "Carlos A. Planchón", email = "carlosandresplanchonprestes@gmail.com"}
 ]
-description = "Library to help parsing broken and invalid JSON."
+description = "Python library to help parsing broken and invalid JSON."
 classifiers = [
     "Intended Audience :: Developers",
     "Topic :: Software Development :: Build Tools",
-    "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14"
 ]
-license = {text = "MIT License"}
+
+
+license = "MIT"
+license-files = ["LICENSE"]
+
 keywords = ["parsing", "broken", "json", "invalid"]
 readme = "README.md"
 dependencies=[
@@ -27,4 +33,4 @@ dependencies=[
 ]
 
 [project.urls]
-repository = "https://github.com/carlosplanchon/parse_broken_json.git"
+Repository = "https://github.com/carlosplanchon/parse_broken_json.git"
