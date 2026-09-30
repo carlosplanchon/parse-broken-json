@@ -1,36 +1,72 @@
 [build-system]
-requires = ["setuptools>=77.0.3", "wheel"]
+requires = ["setuptools>=77.0.3"]
 build-backend = "setuptools.build_meta"
-
-[options]
-package_dir = "parse_broken_json"
-packages = ["parse_broken_json"]
 
 [project]
 name = "parse_broken_json"
-version = "0.3"
+dynamic = ["version"]
 authors = [
     {name = "Carlos A. Planchón", email = "carlosandresplanchonprestes@gmail.com"}
 ]
-description = "Python library to help parsing broken and invalid JSON."
+description = "Parse broken or truncated JSON, as produced by LLMs, recovering as much as possible."
+requires-python = ">=3.11"
 classifiers = [
+    "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
-    "Topic :: Software Development :: Build Tools",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Text Processing",
+    "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
-    "Programming Language :: Python :: 3.14"
+    "Programming Language :: Python :: 3.14",
+    "Typing :: Typed",
 ]
-
-
 license = "MIT"
 license-files = ["LICENSE"]
-
-keywords = ["parsing", "broken", "json", "invalid"]
+keywords = ["json", "broken", "truncated", "repair", "llm", "parsing"]
 readme = "README.md"
-dependencies=[
-    "ijson",
-]
+dependencies = []
 
 [project.urls]
-Repository = "https://github.com/carlosplanchon/parse_broken_json.git"
+Repository = "https://github.com/carlosplanchon/parse_broken_json"
+Issues = "https://github.com/carlosplanchon/parse_broken_json/issues"
+Changelog = "https://github.com/carlosplanchon/parse_broken_json/blob/main/CHANGELOG.md"
+
+[project.scripts]
+parse_broken_json = "parse_broken_json.cli:main"
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+    "pytest-cov>=4.0",
+    "hypothesis>=6.100",
+    "ruff>=0.5",
+    "mypy>=1.0",
+    "ty==0.0.84",  # pre-1.0: pinned so a new release cannot break CI unannounced
+]
+
+[tool.setuptools]
+packages = ["parse_broken_json"]
+
+[tool.setuptools.dynamic]
+version = {attr = "parse_broken_json.__version__"}
+
+[tool.setuptools.package-data]
+parse_broken_json = ["py.typed"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "RUF", "ISC"]
+
+[tool.mypy]
+strict = true
+files = ["parse_broken_json"]
+
+[tool.ty.src]
+include = ["parse_broken_json"]
