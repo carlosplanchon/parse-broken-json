@@ -38,8 +38,6 @@ _CLOSERS = {
 _QUOTES = frozenset(_CLOSERS)
 # What may legitimately follow a closing quote.
 _AFTER_QUOTE = frozenset(",}]:\r\n")
-# Characters that end a bare value and bound the search for a later quote.
-_SEGMENT_END = frozenset(",}]\r\n")
 # What may legitimately follow a number: whitespace, a delimiter, a comment
 # or a quote (a missing comma before a string).
 _AFTER_NUMBER = frozenset(" \t\r\n,}]/") | _QUOTES

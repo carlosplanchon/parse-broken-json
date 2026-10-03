@@ -229,9 +229,12 @@ Measured on 2026-09-30 with json_repair 0.63.5 and jiter 0.17.0.
   Pydantic, handles truncation only, with no tolerance for syntax
   deviations.
 
-On a 284 KB document truncated in the middle: parse-broken-json 48 ms,
-json_repair 64 ms, jiter 1 ms. Streaming the same document through
-`StreamParser` in 4 KB chunks, with a snapshot after each: 53 ms in total.
+On a 284 KB document truncated in the middle: parse-broken-json 35 ms,
+json_repair 82 ms, jiter 0.5 ms. Streaming the same document through
+`StreamParser` in 4 KB chunks, with a snapshot after each: 49 ms in total.
+These are the best of 20 rounds of `benchmarks/bench.py`, timed on
+2026-10-03 with Python 3.14. On a busy machine all four times grow
+together, so compare the ratios.
 
 Which one to use:
 
@@ -250,10 +253,11 @@ Which one to use:
 ```bash
 uv sync                                  # installs the dev group
 uv run pytest --cov=parse_broken_json
-uv run ruff check parse_broken_json tests
-uv run ruff format --check parse_broken_json tests
+uv run ruff check parse_broken_json tests benchmarks
+uv run ruff format --check parse_broken_json tests benchmarks
 uv run ty check                          # the everyday type checker, fast
 uv run mypy                              # the gate in CI, strict
+uv run --group bench python benchmarks/bench.py   # the timings quoted above
 ```
 
 Both type checkers run in CI. ty is the one to use while working; mypy

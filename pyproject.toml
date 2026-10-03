@@ -45,6 +45,11 @@ dev = [
     "mypy>=1.0",
     "ty==0.0.84",  # pre-1.0: pinned so a new release cannot break CI unannounced
 ]
+# For benchmarks/bench.py only, pinned to the versions the README quotes.
+bench = [
+    "jiter==0.17.0",
+    "json-repair==0.63.5",
+]
 
 [tool.setuptools]
 packages = ["parse_broken_json"]
