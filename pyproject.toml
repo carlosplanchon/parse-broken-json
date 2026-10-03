@@ -29,9 +29,9 @@ readme = "README.md"
 dependencies = []
 
 [project.urls]
-Repository = "https://github.com/carlosplanchon/parse_broken_json"
-Issues = "https://github.com/carlosplanchon/parse_broken_json/issues"
-Changelog = "https://github.com/carlosplanchon/parse_broken_json/blob/main/CHANGELOG.md"
+Repository = "https://github.com/carlosplanchon/parse-broken-json"
+Issues = "https://github.com/carlosplanchon/parse-broken-json/issues"
+Changelog = "https://github.com/carlosplanchon/parse-broken-json/blob/main/CHANGELOG.md"
 
 [project.scripts]
 parse_broken_json = "parse_broken_json.cli:main"

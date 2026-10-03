@@ -1,6 +1,6 @@
 # parse_broken_json
 
-[![CI](https://github.com/carlosplanchon/parse_broken_json/actions/workflows/ci.yml/badge.svg)](https://github.com/carlosplanchon/parse_broken_json/actions/workflows/ci.yml)
+[![CI](https://github.com/carlosplanchon/parse-broken-json/actions/workflows/ci.yml/badge.svg)](https://github.com/carlosplanchon/parse-broken-json/actions/workflows/ci.yml)
 [![PyPI](https://img.shields.io/pypi/v/parse_broken_json)](https://pypi.org/project/parse_broken_json/)
 
 Parse broken or truncated JSON, as produced by LLMs, recovering as much as possible.
