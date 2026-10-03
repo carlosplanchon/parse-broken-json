@@ -1,5 +1,7 @@
 # parse-broken-json
 
+![parse-broken-json banner](https://raw.githubusercontent.com/carlosplanchon/parse-broken-json/main/assets/banner.jpg)
+
 [![CI](https://github.com/carlosplanchon/parse-broken-json/actions/workflows/ci.yml/badge.svg)](https://github.com/carlosplanchon/parse-broken-json/actions/workflows/ci.yml)
 [![PyPI version](https://img.shields.io/pypi/v/parse-broken-json.svg)](https://pypi.org/project/parse-broken-json/)
 [![Python versions](https://img.shields.io/pypi/pyversions/parse-broken-json.svg)](https://pypi.org/project/parse-broken-json/)
