@@ -116,6 +116,19 @@ def test_strict_raises_when_nothing_is_found():
         parse_broken_json("garbage", strict=True)
 
 
+def test_strict_error_survives_pickling():
+    with pytest.raises(BrokenJSONError) as info:
+        parse_broken_json('{"a": 1,, "b": 2,}', strict=True)
+    err = info.value
+    err.add_note("while parsing the reply")
+    clone = pickle.loads(pickle.dumps(err))
+    assert type(clone) is BrokenJSONError
+    assert (clone.message, clone.position) == ("extra comma", 8)
+    assert clone.repairs == err.repairs
+    assert str(clone) == str(err)
+    assert clone.__notes__ == ["while parsing the reply"]
+
+
 # --- stream_stable -----------------------------------------------------------
 
 

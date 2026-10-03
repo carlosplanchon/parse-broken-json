@@ -48,3 +48,7 @@ class BrokenJSONError(ValueError):
         self.message = message
         self.position = position
         self.repairs = repairs
+
+    def __reduce__(self) -> tuple[Any, ...]:
+        """Pickle with the constructor's arguments; ``args`` only holds the formatted message."""
+        return type(self), (self.message, self.position, self.repairs), self.__dict__
