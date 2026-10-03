@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.4.0 - 2026-09-30
+## 0.4.0 - 2026-10-03
 
 The parser was rewritten from scratch. It is a small recursive-descent parser
 with no dependencies; `ijson` is no longer required.
