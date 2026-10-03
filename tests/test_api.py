@@ -1,5 +1,7 @@
 import io
 import math
+import pickle
+import typing
 
 import pytest
 
@@ -7,6 +9,7 @@ from parse_broken_json import (
     BrokenJSONError,
     ParseResult,
     Repair,
+    StreamParser,
     __version__,
     from_file,
     load,
@@ -314,3 +317,14 @@ def test_strict_rejects_duplicate_keys_even_in_valid_json():
     with pytest.raises(BrokenJSONError) as info:
         parse_broken_json('{"a": 1, "a": 2}', strict=True)
     assert (info.value.message, info.value.position) == ("duplicate key, last one wins", 9)
+
+
+# --- public classes ----------------------------------------------------------
+
+
+def test_public_classes_belong_to_the_package():
+    for cls in (BrokenJSONError, ParseResult, Repair, StreamParser):
+        assert cls.__module__ == "parse_broken_json"
+    result = parse_broken_json_result('{"a": tru')
+    assert pickle.loads(pickle.dumps(result)) == result
+    assert typing.get_type_hints(ParseResult)["repairs"] == tuple[Repair, ...]
