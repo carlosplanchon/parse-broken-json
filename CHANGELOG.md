@@ -36,7 +36,7 @@ with no dependencies; `ijson` is no longer required.
 - Input may be `str`, UTF-8 `bytes` or a file-like object. A leading byte
   order mark is ignored.
 - `loads`, `load` and `from_file`, mirroring the `json` module.
-- A command-line tool: `parse_broken_json [file] [-o OUT] [-i] [--report] ...`.
+- A command-line tool: `parse-broken-json [file] [-o OUT] [-i] [--report] ...`.
 - Tolerance for single and typographic quotes, unquoted keys, comments,
   Python and JavaScript literals, lenient numbers, missing or doubled commas,
   missing colons and missing values.

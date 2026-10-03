@@ -76,4 +76,4 @@ def test_version(capsys):
     with pytest.raises(SystemExit) as info:
         main(["--version"])
     assert info.value.code == 0
-    assert capsys.readouterr().out.strip() == f"parse_broken_json {__version__}"
+    assert capsys.readouterr().out.strip() == f"parse-broken-json {__version__}"

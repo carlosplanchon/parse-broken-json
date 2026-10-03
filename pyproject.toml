@@ -3,7 +3,7 @@ requires = ["setuptools>=77.0.3"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "parse_broken_json"
+name = "parse-broken-json"
 dynamic = ["version"]
 authors = [
     {name = "Carlos A. Planchón", email = "carlosandresplanchonprestes@gmail.com"}
@@ -34,7 +34,7 @@ Issues = "https://github.com/carlosplanchon/parse-broken-json/issues"
 Changelog = "https://github.com/carlosplanchon/parse-broken-json/blob/main/CHANGELOG.md"
 
 [project.scripts]
-parse_broken_json = "parse_broken_json.cli:main"
+parse-broken-json = "parse_broken_json.cli:main"
 
 [dependency-groups]
 dev = [

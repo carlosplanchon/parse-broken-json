@@ -1,4 +1,4 @@
-"""Command-line interface: ``parse_broken_json [file] [options]``."""
+"""Command-line interface: ``parse-broken-json [file] [options]``."""
 
 from __future__ import annotations
 
@@ -11,7 +11,7 @@ from . import BrokenJSONError, __version__, parse_broken_json_result
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        prog="parse_broken_json",
+        prog="parse-broken-json",
         description="Repair broken or truncated JSON and print it as valid JSON.",
     )
     parser.add_argument("file", nargs="?", help="input file (default: standard input)")

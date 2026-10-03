@@ -1,4 +1,4 @@
-# parse_broken_json
+# parse-broken-json
 
 [![CI](https://github.com/carlosplanchon/parse-broken-json/actions/workflows/ci.yml/badge.svg)](https://github.com/carlosplanchon/parse-broken-json/actions/workflows/ci.yml)
 [![PyPI version](https://img.shields.io/pypi/v/parse-broken-json.svg)](https://pypi.org/project/parse-broken-json/)
@@ -23,10 +23,10 @@ it had to repair, and never raises on bad input unless you ask it to.
 ## Installation
 
 ```bash
-uv add parse_broken_json
+uv add parse-broken-json
 ```
 
-or `pip install parse_broken_json`. Python 3.11 or later.
+or `pip install parse-broken-json`. Python 3.11 or later.
 
 ## Quick start
 
@@ -154,11 +154,11 @@ repairs.
 ### Command line
 
 ```bash
-parse_broken_json broken.json                 # repaired JSON on standard output
-cat broken.json | parse_broken_json --compact
-parse_broken_json broken.json -o fixed.json
-parse_broken_json broken.json -i --report     # fix in place, list the repairs on stderr
-parse_broken_json --help
+parse-broken-json broken.json                 # repaired JSON on standard output
+cat broken.json | parse-broken-json --compact
+parse-broken-json broken.json -o fixed.json
+parse-broken-json broken.json -i --report     # fix in place, list the repairs on stderr
+parse-broken-json --help
 ```
 
 ## What it repairs
@@ -227,7 +227,7 @@ Measured on 2026-09-30 with json_repair 0.63.5 and jiter 0.17.0.
   Pydantic, handles truncation only, with no tolerance for syntax
   deviations.
 
-On a 284 KB document truncated in the middle: parse_broken_json 48 ms,
+On a 284 KB document truncated in the middle: parse-broken-json 48 ms,
 json_repair 64 ms, jiter 1 ms. Streaming the same document through
 `StreamParser` in 4 KB chunks, with a snapshot after each: 53 ms in total.
 
