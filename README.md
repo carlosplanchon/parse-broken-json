@@ -233,6 +233,18 @@ On a 284 KB document truncated in the middle: parse-broken-json 48 ms,
 json_repair 64 ms, jiter 1 ms. Streaming the same document through
 `StreamParser` in 4 KB chunks, with a snapshot after each: 53 ms in total.
 
+Which one to use:
+
+- jiter, when the JSON is well-formed and only cut short, like structured
+  output stopped by a token limit. It is by far the fastest, and
+  `partial_mode=True` drops an unfinished trailing string.
+- json_repair, when you want the repaired JSON as a string, repair guided by
+  a schema, or Python 3.10.
+- This library, when you read a stream and act on values as they arrive.
+  `StreamParser` parses incrementally and only returns values that are
+  final. json_repair's `stream_stable=True` takes the whole text at each call
+  and keeps unfinished strings: `{"a": 1, "b": "x` gives `{"a": 1, "b": "x"}`.
+
 ## Development
 
 ```bash
