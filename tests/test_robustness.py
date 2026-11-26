@@ -51,3 +51,18 @@ def test_streaming_a_long_string_one_character_at_a_time_is_fast():
         parser.feed(char)
     assert parser.finish().value == {"a": "x" * 20_000, "b": 1}
     assert time.perf_counter() - started < 2.0
+
+
+def test_streaming_whitespace_one_character_at_a_time_is_fast():
+    from parse_broken_json import StreamParser
+
+    # The snapshot after each character makes the parser resume every time.
+    # Scanning the whitespace again from its start on each resume took seconds.
+    text = '{"a": "x,' + " " * 5_000 + 'y", "b":' + " " * 5_000 + "1}"
+    parser = StreamParser()
+    started = time.perf_counter()
+    for char in text:
+        parser.feed(char)
+        parser.snapshot()
+    assert parser.finish().value == {"a": "x," + " " * 5_000 + "y", "b": 1}
+    assert time.perf_counter() - started < 2.0

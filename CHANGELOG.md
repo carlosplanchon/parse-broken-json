@@ -15,6 +15,11 @@
 - The command-line tool replaces undecodable bytes on standard input, as it
   does in a file. It used to raise a `UnicodeError` or, on Python 3.15, write
   them back unchanged, leaving output that was not valid UTF-8.
+- `StreamParser` returns what a one-shot parse returns when a string that lost
+  its closing quote is followed by a newline and the next key. A chunk ending
+  right after the newline left the comma in the string, or the key inside it.
+- Streaming a long run of whitespace takes linear time: each chunk made the
+  parser scan the run again from its start.
 
 ## 0.4.0 - 2026-10-03
 

@@ -7,8 +7,7 @@ from bisect import bisect_left
 
 # Characters that end a bare value and bound the search for a later quote.
 _DELIM_RE = re.compile(r"[,}\]\r\n]")
-# Structural characters: whatever follows one of them cannot change the
-# outcome of the "missing closing quote" lookahead.
+# Structural characters: a quoted key cannot run past one of them.
 _STRUCT_RE = re.compile(r"[,}\]:{\[\r\n]")
 
 

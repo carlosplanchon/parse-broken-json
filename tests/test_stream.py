@@ -35,6 +35,8 @@ DEVIANT = [
     '{"a": 1}\n{"b": "x"}\n{"c": [true]}',
     '{"a": "line1\\nline2", "b": "\\u00e9\\ud83d\\ude00", "c": -1.5e3, "d": 0x1F, /* c */ "e": .5}',
     '[{"a": 1}, {"a": 2}, {"a": 3, "b": "xx',
+    # Closing quotes missing before a key on the next line, or before its colon.
+    '{\n  "a": "x,\n  "b": 1,\r\n  "c": "y\r\n  "d": "z, "e"\n  : 2\n}',
 ]
 DOCS = [VALID, *DEVIANT]
 
@@ -51,9 +53,12 @@ def leaves(value, path=()):
 
 
 def feed_in_chunks(doc, size, **options):
+    # feed() only stores the text. The snapshot makes the parser go through each
+    # chunk as it arrives, so it has to stop and resume wherever a chunk ends.
     parser = StreamParser(**options)
     for k in range(0, len(doc), size):
         parser.feed(doc[k : k + size])
+        parser.snapshot()
     return parser
 
 

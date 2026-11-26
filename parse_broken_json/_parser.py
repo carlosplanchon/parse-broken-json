@@ -52,20 +52,11 @@ _STRICT_NUMBER_RE = re.compile(r"-?(?:0|[1-9][0-9]*)(?:\.[0-9]+)?(?:[eE][+-]?[0-
 _LEADING_ZEROS_RE = re.compile(r"^(-?)0+(?=[0-9])")
 # An unquoted key runs until whitespace, a structural character or a quote.
 _BARE_KEY_RE = re.compile(r"[^\s:,{}\[\]\"'" + _CURLY + r"]+")
-# A quoted key followed by a colon: what comes right after a comma or newline
-# inside a string whose closing quote is missing. Group 1 is its opening quote.
-_KEY_AHEAD_RE = re.compile(
-    r"\s*([\"'"
-    + _LDQ
-    + _LSQ
-    + r"])"
-    + r"[^\"'"
-    + _CURLY
-    + r":,{}\[\]\r\n]*"
-    + r"[\"'"
-    + _RDQ
-    + _RSQ
-    + r"]\s*:"
+# A quoted key, as it may follow a comma or newline inside a string whose
+# closing quote is missing: a quote, text with no quote or structural
+# character, and a quote.
+_QUOTED_KEY_RE = re.compile(
+    r"[\"'" + _LDQ + _LSQ + r"][^\"'" + _CURLY + r":,{}\[\]\r\n]*[\"'" + _RDQ + _RSQ + r"]"
 )
 _HEX_DIGITS = frozenset("0123456789abcdefABCDEF")
 _ESCAPES = {
@@ -168,9 +159,9 @@ class _PartialParser:
 
     def _need_space_end(self, pos: int) -> Generator[None, None, int]:
         """Index of the first non-whitespace character from ``pos``."""
+        j = pos  # the buffer only grows: resume where the last scan stopped
         while True:
             s, n = self.b.s, self.b.n
-            j = pos
             while j < n and s[j].isspace():
                 j += 1
             if j < n or self.b.eof:
@@ -445,6 +436,25 @@ class _PartialParser:
             return
         yield from self._need_closer_or_delimiter(j, closers)
 
+    def _key_ahead(self, pos: int, closers: str) -> Generator[None, None, bool]:
+        """Whether a quoted key and a colon come next from ``pos``, past whitespace.
+
+        After a comma or newline inside a string, that means its closing quote
+        is missing. Only the string's own kind of quote can open the key:
+        another kind is content, as in ``"{'a': 1, 'b': 2}"``. Every character
+        the answer depends on is waited for, newlines around the key included,
+        so the answer does not depend on where the stream was cut.
+        """
+        j = yield from self._need_space_end(pos)
+        if j >= self.b.n or self.b.s[j] not in closers:
+            return False
+        yield from self._need_structural(j + 1)  # the key cannot run past one
+        key = _QUOTED_KEY_RE.match(self.b.s, j)
+        if key is None:
+            return False
+        k = yield from self._need_space_end(key.end())
+        return k < self.b.n and self.b.s[k] == ":"
+
     def _parse_string(self) -> _Parsed:
         b = self.b
         opened = self.i
@@ -470,12 +480,9 @@ class _PartialParser:
                     i += 1
                     continue
                 if c in ",\r\n":
-                    yield from self._need_structural(i + 1)
+                    key_ahead = yield from self._key_ahead(i + 1, closers)
                     s, n = b.s, b.n
-                    ahead = _KEY_AHEAD_RE.match(s, i + 1)
-                    # Only this string's own kind of quote can open the next key:
-                    # another kind is content, as in "{'a': 1, 'b': 2}".
-                    if ahead is not None and ahead.group(1) in closers:
+                    if key_ahead:
                         # The closing quote is missing: what follows is the next key.
                         self._log(i, "missing closing quote")
                         chunks.append(s[start:i].rstrip())

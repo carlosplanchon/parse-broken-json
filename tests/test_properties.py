@@ -115,3 +115,23 @@ def test_random_chunking_matches_one_shot_and_snapshots_are_final(value, data):
             for path, leaf in leaves(snapshot.value):
                 assert final[path] == leaf
     assert parser.finish().value == [json.loads(text)]
+
+
+@settings(max_examples=300, deadline=None)
+@given(tricky_containers, st.sampled_from([None, 0, 2]), st.booleans(), st.data())
+def test_broken_json_streamed_in_random_chunks_matches_one_shot(value, indent, ensure_ascii, data):
+    from parse_broken_json import StreamParser
+
+    # JSON missing one character (a quote, a comma, a bracket...). The snapshot
+    # after each chunk makes the parser stop wherever that chunk ends.
+    text = json.dumps(value, indent=indent, ensure_ascii=ensure_ascii)
+    drop = data.draw(st.integers(min_value=0, max_value=len(text) - 1))
+    text = text[:drop] + text[drop + 1 :]
+    cuts = sorted(data.draw(st.lists(st.integers(min_value=0, max_value=len(text)), max_size=8)))
+    parser = StreamParser()
+    previous = 0
+    for cut in [*cuts, len(text)]:
+        parser.feed(text[previous:cut])
+        previous = cut
+        parser.snapshot()
+    assert parser.finish() == parse_broken_json_result(text)
