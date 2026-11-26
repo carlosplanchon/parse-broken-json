@@ -78,6 +78,9 @@ def main(argv: list[str] | None = None) -> int:
             print(f"{repair.position}: {repair.message}", file=sys.stderr)
     indent = None if args.compact else args.indent
     out = json.dumps(result.value, ensure_ascii=False, indent=indent) + "\n"
+    # An unpaired \u escape decodes to a lone surrogate, which UTF-8 cannot
+    # encode: write it back as that escape, which keeps the output valid JSON.
+    out = out.encode("utf-8", errors="backslashreplace").decode("utf-8")
     target = args.file if args.inline else args.output
     if target:
         with open(target, "w", encoding="utf-8") as fp:

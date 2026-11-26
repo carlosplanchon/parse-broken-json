@@ -15,6 +15,9 @@
 - The command-line tool replaces undecodable bytes on standard input, as it
   does in a file. It used to raise a `UnicodeError` or, on Python 3.15, write
   them back unchanged, leaving output that was not valid UTF-8.
+- The command-line tool writes a lone surrogate, which an unpaired `\u`
+  escape decodes to, back as that escape. It raised `UnicodeEncodeError`
+  instead, and with `-i` it left the input file empty.
 - `StreamParser` returns what a one-shot parse returns when a string that lost
   its closing quote is followed by a newline and the next key. A chunk ending
   right after the newline left the comma in the string, or the key inside it.

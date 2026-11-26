@@ -39,6 +39,21 @@ def test_stdin_replaces_undecodable_bytes_like_a_file(tmp_path, monkeypatch, cap
     assert capsys.readouterr().out == from_file == '{"a": "caf\ufffd"}\n'
 
 
+def test_lone_surrogates_are_written_back_as_escapes(tmp_path, capsys):
+    # An unpaired \u escape is valid JSON, but the lone surrogate it decodes to
+    # has no UTF-8 encoding. Writing it raised UnicodeEncodeError, and with -i
+    # left the input file empty. It goes back out as the same escape.
+    value = {"a": chr(0xD800), "b" + chr(0xDCE9): "caf\N{LATIN SMALL LETTER E WITH ACUTE}"}
+    path = tmp_path / "in.json"
+    path.write_text(json.dumps(value), encoding="utf-8")
+    assert main([str(path), "--compact"]) == 0
+    out = capsys.readouterr().out
+    assert json.loads(out) == value
+    assert "caf\N{LATIN SMALL LETTER E WITH ACUTE}" in out  # other characters stay as they are
+    assert main([str(path), "-i", "--compact"]) == 0
+    assert path.read_text(encoding="utf-8") == out
+
+
 def test_output_file_and_inline(tmp_path):
     src = tmp_path / "in.json"
     src.write_text('{"a": 1,}', encoding="utf-8")
