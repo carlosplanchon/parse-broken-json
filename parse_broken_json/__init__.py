@@ -37,7 +37,7 @@ from ._stream import _BOM, StreamParser
 from ._stream import AllowedKeys as AllowedKeys
 from ._stream import Multiple as Multiple
 
-__version__ = "0.4.0"
+__version__ = "0.4.1"
 
 __all__ = [
     "BrokenJSONError",
