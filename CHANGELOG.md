@@ -1,5 +1,21 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+- Support for Python 3.15, tested in CI.
+
+### Fixed
+
+- A string such as `"{'a': 1, 'b': 2}"` is kept whole. When the JSON had text
+  around it, the string was cut at the comma, as if its closing quote were
+  missing. A missing closing quote is now only assumed before a key quoted
+  like the string itself.
+- The command-line tool replaces undecodable bytes on standard input, as it
+  does in a file. It used to raise a `UnicodeError` or, on Python 3.15, write
+  them back unchanged, leaving output that was not valid UTF-8.
+
 ## 0.4.0 - 2026-10-03
 
 The parser was rewritten from scratch. It is a small recursive-descent parser

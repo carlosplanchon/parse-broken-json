@@ -159,6 +159,13 @@ def test_nan_literal():
         ('{"a: 1, "b": 2}', {"b": 2}),
         ('{"a": "x}', {"a": "x"}),
         ('{"a": {"b": "x}', {"a": {"b": "x"}}),
+        # Only the string's own kind of quote can open that key: another kind is content.
+        ('Note: {"a": "{\'b\': 1, \'c\': 2}", "b": 3}', {"a": "{'b': 1, 'c': 2}", "b": 3}),
+        ("Note: {'a': '{\"b\": 1, \"c\": 2}', 'b': 3}", {"a": '{"b": 1, "c": 2}', "b": 3}),
+        (f'Note: {{"a": "he said, {LDQ}hi{RDQ}: yes"}}', {"a": f"he said, {LDQ}hi{RDQ}: yes"}),
+        ("{'a': 'x, 'b': 2}", {"a": "x", "b": 2}),
+        (f"{{{LDQ}a{RDQ}: {LDQ}x, {LDQ}b{RDQ}: 2}}", {"a": "x", "b": 2}),
+        ('{"a": "x, \'b\': 2}', {"a": "x, 'b': 2"}),  # one string, closed at the brace
         # Unescaped quotes inside a string are content while it can still be closed.
         ('{"a": "say "hi"", "b": 2}', {"a": 'say "hi"', "b": 2}),
         ("{'a': 'it's'}", {"a": "it's"}),
@@ -185,6 +192,11 @@ def test_string_and_bare_value_repairs(text, expected):
 
 def test_unescaped_quote_inside_key():
     assert parse_broken_json('{"my "key"": 1}', ['my "key"']) == {'my "key"': 1}
+
+
+def test_comma_and_another_kind_of_quote_ending_a_key():
+    # Found by Hypothesis: the "'" and the closing '"' were read as the next key.
+    assert parse_broken_json('{"a,\'": 1} and more') == {"a,'": 1}
 
 
 def test_allowed_keys_filter_applies_at_every_level():

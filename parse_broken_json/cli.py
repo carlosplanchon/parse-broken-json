@@ -54,7 +54,10 @@ def main(argv: list[str] | None = None) -> int:
         with open(args.file, encoding="utf-8", errors="replace") as fp:
             text = fp.read()
     else:
-        text = sys.stdin.read()
+        # Decoded like the file above. sys.stdin's own decoding depends on the
+        # locale and the Python version: undecodable bytes raise or, with the
+        # UTF-8 mode that Python 3.15 enables by default, reach the output as is.
+        text = sys.stdin.buffer.read().decode("utf-8", errors="replace")
     keys = [key.strip() for key in args.keys.split(",")] if args.keys else None
     try:
         result = parse_broken_json_result(

@@ -21,6 +21,18 @@ json_values = st.recursive(
 containers = st.lists(json_values, max_size=4) | st.dictionaries(
     st.text(max_size=8), json_values, max_size=4
 )
+# Strings made of what the repairs react to: delimiters and quotes of every kind.
+tricky_text = st.text(",:'\"{}[] \\/*\n\u201c\u201d\u2018\u2019x1", max_size=8)
+tricky_values = st.recursive(
+    st.none() | st.booleans() | st.integers(-10, 10) | tricky_text,
+    lambda children: (
+        st.lists(children, max_size=3) | st.dictionaries(tricky_text, children, max_size=3)
+    ),
+    max_leaves=10,
+)
+tricky_containers = st.lists(tricky_values, max_size=3) | st.dictionaries(
+    tricky_text, tricky_values, max_size=3
+)
 
 
 def leaves(value, path=()):
@@ -57,6 +69,20 @@ def test_valid_container_with_trailing_text_is_recovered_verbatim(value):
     assert result.value == value
     assert result.complete
     assert [repair.message for repair in result.repairs] == ["trailing text ignored"]
+
+
+@settings(max_examples=300, deadline=None)
+@given(tricky_containers, st.booleans())
+def test_strings_full_of_delimiters_and_quotes_are_recovered_verbatim(value, ensure_ascii):
+    # The text around it sends valid JSON down the recovery path.
+    text = "Here: " + json.dumps(value, ensure_ascii=ensure_ascii) + " ok."
+    result = parse_broken_json_result(text)
+    assert result.value == value
+    assert result.complete
+    assert [repair.message for repair in result.repairs] == [
+        "leading text skipped",
+        "trailing text ignored",
+    ]
 
 
 @settings(max_examples=300, deadline=None)

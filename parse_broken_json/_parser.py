@@ -53,12 +53,12 @@ _LEADING_ZEROS_RE = re.compile(r"^(-?)0+(?=[0-9])")
 # An unquoted key runs until whitespace, a structural character or a quote.
 _BARE_KEY_RE = re.compile(r"[^\s:,{}\[\]\"'" + _CURLY + r"]+")
 # A quoted key followed by a colon: what comes right after a comma or newline
-# inside a string whose closing quote is missing.
+# inside a string whose closing quote is missing. Group 1 is its opening quote.
 _KEY_AHEAD_RE = re.compile(
-    r"\s*[\"'"
+    r"\s*([\"'"
     + _LDQ
     + _LSQ
-    + r"]"
+    + r"])"
     + r"[^\"'"
     + _CURLY
     + r":,{}\[\]\r\n]*"
@@ -472,7 +472,10 @@ class _PartialParser:
                 if c in ",\r\n":
                     yield from self._need_structural(i + 1)
                     s, n = b.s, b.n
-                    if _KEY_AHEAD_RE.match(s, i + 1):
+                    ahead = _KEY_AHEAD_RE.match(s, i + 1)
+                    # Only this string's own kind of quote can open the next key:
+                    # another kind is content, as in "{'a': 1, 'b': 2}".
+                    if ahead is not None and ahead.group(1) in closers:
                         # The closing quote is missing: what follows is the next key.
                         self._log(i, "missing closing quote")
                         chunks.append(s[start:i].rstrip())

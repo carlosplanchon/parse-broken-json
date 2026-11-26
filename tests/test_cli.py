@@ -7,6 +7,11 @@ from parse_broken_json import __version__
 from parse_broken_json.cli import main
 
 
+def fake_stdin(data):
+    """Stand in for sys.stdin, whose underlying bytes the CLI reads."""
+    return io.TextIOWrapper(io.BytesIO(data), encoding="utf-8")
+
+
 def test_repairs_a_file_to_stdout(tmp_path, capsys):
     path = tmp_path / "in.json"
     path.write_text('{"a": [1, 2, "b": 3', encoding="utf-8")
@@ -18,9 +23,20 @@ def test_repairs_a_file_to_stdout(tmp_path, capsys):
 
 
 def test_reads_stdin_and_writes_compact(monkeypatch, capsys):
-    monkeypatch.setattr("sys.stdin", io.StringIO("Here: {'a': 1, 'b': [1, 2,]}"))
+    monkeypatch.setattr("sys.stdin", fake_stdin(b"Here: {'a': 1, 'b': [1, 2,]}"))
     assert main(["--compact"]) == 0
     assert capsys.readouterr().out == '{"a": 1, "b": [1, 2]}\n'
+
+
+def test_stdin_replaces_undecodable_bytes_like_a_file(tmp_path, monkeypatch, capsys):
+    data = b'{"a": "caf\xe9"}'  # Latin-1, not UTF-8
+    path = tmp_path / "in.json"
+    path.write_bytes(data)
+    assert main([str(path), "--compact"]) == 0
+    from_file = capsys.readouterr().out
+    monkeypatch.setattr("sys.stdin", fake_stdin(data))
+    assert main(["--compact"]) == 0
+    assert capsys.readouterr().out == from_file == '{"a": "caf\ufffd"}\n'
 
 
 def test_output_file_and_inline(tmp_path):
@@ -67,7 +83,7 @@ def test_strict_and_nothing_found_fail(tmp_path, capsys):
 
 
 def test_stream_stable_flag(monkeypatch, capsys):
-    monkeypatch.setattr("sys.stdin", io.StringIO('{"a": 1, "b": "x'))
+    monkeypatch.setattr("sys.stdin", fake_stdin(b'{"a": 1, "b": "x'))
     assert main(["--stream-stable", "--compact"]) == 0
     assert capsys.readouterr().out == '{"a": 1}\n'
 
