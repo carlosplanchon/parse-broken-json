@@ -109,6 +109,9 @@ class StreamParser:
     With ``multiple="auto"`` the shape of the value can change once a second
     top-level object shows up (a dict becomes a list of dicts); use
     ``multiple="all"`` or ``multiple="first"`` when the shape must not change.
+
+    Duplicate keys keep the last value, as in :func:`json.loads`: a key that
+    comes again replaces the value a snapshot showed for it.
     """
 
     def __init__(

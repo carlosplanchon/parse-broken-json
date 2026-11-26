@@ -101,6 +101,18 @@ second top-level object shows up: a dict becomes a list of dicts. Use
 `multiple="first"` or `multiple="all"` when streaming if the shape must not
 change.
 
+Duplicate keys are the other exception. The last value wins, as in
+`json.loads`, so a key that comes again replaces the value a snapshot showed
+for it:
+
+```python
+parser = StreamParser()
+parser.feed('{"a": 1, ')
+parser.value  # {'a': 1}
+parser.feed('"a": 2}')
+parser.value  # {'a': 2}
+```
+
 ### Strict mode
 
 ```python
@@ -150,8 +162,11 @@ loads('{"price": 19.90, "qty": 2', parse_float=Decimal)
 # {'price': Decimal('19.90'), 'qty': 2}
 ```
 
-Duplicate keys keep the last value, as in `json.loads`, and are listed in the
-repairs.
+Duplicate keys keep the last value, as in `json.loads`. In broken JSON each
+one is listed in the repairs; valid JSON comes back as `json.loads` returns
+it, with no repairs, unless `strict=True` rejects it. The object hooks get
+each object with its duplicates already merged, so unlike with `json.loads`,
+`object_pairs_hook` cannot be used to spot them.
 
 ### Command line
 

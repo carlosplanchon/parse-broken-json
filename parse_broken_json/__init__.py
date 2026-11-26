@@ -113,14 +113,16 @@ def parse_broken_json_result(
       JSON with duplicate keys is rejected too.
     * ``stream_stable``: treat ``data`` as the prefix of a stream and return
       only what was decided without looking past its end, so that the values
-      never change when more input arrives. See :class:`StreamParser`.
+      never change when more input arrives, unless a key comes again: the
+      last value wins. See :class:`StreamParser`.
     * ``multiple``: what to do when the text holds several top-level values.
       ``"auto"`` returns several objects as a list and otherwise the longest
       value; ``"all"`` always returns a list; ``"first"`` and ``"longest"``
       return one value.
     * ``object_hook``, ``object_pairs_hook``, ``parse_float``, ``parse_int``
       and ``parse_constant`` work as in :func:`json.loads`. The object hooks
-      run after ``allowed_keys`` filtering.
+      run after ``allowed_keys`` filtering, once duplicate keys are merged:
+      unlike with :func:`json.loads`, ``object_pairs_hook`` never sees them.
     """
     parser = StreamParser(
         allowed_keys,
