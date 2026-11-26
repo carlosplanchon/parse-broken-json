@@ -3,8 +3,12 @@
 from __future__ import annotations
 
 import argparse
+import contextlib
 import json
+import os
+import shutil
 import sys
+import tempfile
 
 from . import BrokenJSONError, __version__, parse_broken_json_result
 
@@ -45,6 +49,36 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
+def _replace_file(path: str, text: str) -> None:
+    """Write ``text`` over the file at ``path`` without risking its contents.
+
+    The text goes to a temporary file in the same directory, which then
+    replaces the file in one step: until then the file is left as it was,
+    whatever fails or interrupts the write. Only a directory where no file
+    can be created leaves no choice but to overwrite the file in place.
+    """
+    real = os.path.realpath(path)  # through a symbolic link, replace what it points to
+    try:
+        fd, temporary = tempfile.mkstemp(
+            dir=os.path.dirname(real), prefix=".parse-broken-json-", suffix=".tmp"
+        )
+    except PermissionError:
+        with open(real, "w", encoding="utf-8") as fp:
+            fp.write(text)
+        return
+    try:
+        with open(fd, "w", encoding="utf-8") as fp:
+            fp.write(text)
+            fp.flush()
+            os.fsync(fp.fileno())  # on disk before it replaces the file
+        shutil.copymode(real, temporary)  # it was created readable by its owner only
+        os.replace(temporary, real)
+    except BaseException:
+        with contextlib.suppress(OSError):
+            os.unlink(temporary)
+        raise
+
+
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     if args.inline and not args.file:
@@ -81,9 +115,10 @@ def main(argv: list[str] | None = None) -> int:
     # An unpaired \u escape decodes to a lone surrogate, which UTF-8 cannot
     # encode: write it back as that escape, which keeps the output valid JSON.
     out = out.encode("utf-8", errors="backslashreplace").decode("utf-8")
-    target = args.file if args.inline else args.output
-    if target:
-        with open(target, "w", encoding="utf-8") as fp:
+    if args.inline:
+        _replace_file(args.file, out)
+    elif args.output:
+        with open(args.output, "w", encoding="utf-8") as fp:
             fp.write(out)
     else:
         sys.stdout.write(out)

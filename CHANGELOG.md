@@ -18,6 +18,10 @@
 - The command-line tool writes a lone surrogate, which an unpaired `\u`
   escape decodes to, back as that escape. It raised `UnicodeEncodeError`
   instead, and with `-i` it left the input file empty.
+- With `-i`, the result goes to a temporary file that then replaces the input
+  in one step, so a full disk or an interrupted write can no longer leave the
+  input empty or cut short. The file keeps its permissions, and a symbolic
+  link keeps pointing to it.
 - `StreamParser` returns what a one-shot parse returns when a string that lost
   its closing quote is followed by a newline and the next key. A chunk ending
   right after the newline left the comma in the string, or the key inside it.

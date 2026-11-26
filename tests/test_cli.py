@@ -1,5 +1,8 @@
 import io
 import json
+import os
+import signal
+import stat
 
 import pytest
 
@@ -62,6 +65,53 @@ def test_output_file_and_inline(tmp_path):
     assert out.read_text(encoding="utf-8") == '{"a": 1}\n'
     assert main([str(src), "-i", "--compact"]) == 0
     assert src.read_text(encoding="utf-8") == '{"a": 1}\n'
+
+
+@pytest.mark.skipif(not hasattr(signal, "SIGXFSZ"), reason="needs RLIMIT_FSIZE")
+def test_inline_keeps_the_input_when_the_disk_is_full(tmp_path):
+    import resource
+
+    # Files cannot grow past 100 bytes, as on a full disk. Overwriting the
+    # input in place left only its first 100 bytes; now it is left as it was.
+    text = '{"a": "' + "x" * 1000 + '",}'
+    path = tmp_path / "in.json"
+    path.write_text(text, encoding="utf-8")
+    soft, hard = resource.getrlimit(resource.RLIMIT_FSIZE)
+    handler = signal.signal(signal.SIGXFSZ, signal.SIG_IGN)  # fail the write, not the process
+    resource.setrlimit(resource.RLIMIT_FSIZE, (100, hard))
+    try:
+        with pytest.raises(OSError):
+            main([str(path), "-i", "--compact"])
+    finally:
+        resource.setrlimit(resource.RLIMIT_FSIZE, (soft, hard))
+        signal.signal(signal.SIGXFSZ, handler)
+    assert path.read_text(encoding="utf-8") == text
+    assert [entry.name for entry in tmp_path.iterdir()] == ["in.json"]  # no temporary file left
+
+
+@pytest.mark.skipif(os.name != "posix", reason="POSIX permissions and symbolic links")
+def test_inline_keeps_the_permissions_and_follows_symbolic_links(tmp_path):
+    real = tmp_path / "real.json"
+    real.write_text('{"a": 1,}', encoding="utf-8")
+    real.chmod(0o640)
+    link = tmp_path / "link.json"
+    link.symlink_to(real)
+    assert main([str(link), "-i", "--compact"]) == 0
+    assert link.is_symlink()
+    assert real.read_text(encoding="utf-8") == '{"a": 1}\n'
+    assert stat.S_IMODE(real.stat().st_mode) == 0o640
+    assert sorted(entry.name for entry in tmp_path.iterdir()) == ["link.json", "real.json"]
+
+
+def test_inline_overwrites_in_place_when_the_directory_is_read_only(tmp_path, monkeypatch):
+    def refuse(*args, **kwargs):
+        raise PermissionError("the directory is read-only")
+
+    monkeypatch.setattr("tempfile.mkstemp", refuse)
+    path = tmp_path / "in.json"
+    path.write_text('{"a": 1,}', encoding="utf-8")
+    assert main([str(path), "-i", "--compact"]) == 0
+    assert path.read_text(encoding="utf-8") == '{"a": 1}\n'
 
 
 def test_inline_needs_a_file(capsys):
