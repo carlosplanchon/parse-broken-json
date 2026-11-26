@@ -111,6 +111,7 @@ def test_truncation_and_surrounding_text(text, expected):
         ('{"a": 1, // comment\n "b": 2}', {"a": 1, "b": 2}),
         ('{"a": 1, /* c */ "b": 2}', {"a": 1, "b": 2}),
         ('{"a": 1, /* unterminated', {"a": 1}),
+        ('{"a": 1, // unterminated', {"a": 1}),
         # Python and JavaScript literals.
         (
             '{"a": True, "b": False, "c": None, "d": undefined}',

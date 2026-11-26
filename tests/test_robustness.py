@@ -1,8 +1,14 @@
 import time
 
+import pytest
+
 from parse_broken_json import parse_broken_json
 
+# The timings run without coverage: its tracer slows Python 3.11 to 3.13 down
+# several times, which says nothing about the code being timed.
 
+
+@pytest.mark.no_cover
 def test_many_dead_candidates_are_not_quadratic():
     # Every "[" is a candidate that leads nowhere. Before the shared delimiter
     # table each one rescanned to the end of the input: 20 000 of them took
@@ -13,6 +19,7 @@ def test_many_dead_candidates_are_not_quadratic():
     assert time.perf_counter() - started < 2.0
 
 
+@pytest.mark.no_cover
 def test_unterminated_comments_are_not_quadratic():
     text = "[/*" * 20_000
     started = time.perf_counter()
@@ -25,6 +32,7 @@ def test_deep_nesting_does_not_crash():
     assert isinstance(parse_broken_json('{"a": ' * 10_000), dict)
 
 
+@pytest.mark.no_cover
 def test_large_valid_document_takes_the_fast_path():
     import json
 
@@ -34,6 +42,7 @@ def test_large_valid_document_takes_the_fast_path():
     assert time.perf_counter() - started < 2.0
 
 
+@pytest.mark.no_cover
 def test_unterminated_line_comments_are_not_quadratic():
     text = "[// x " * 20_000
     started = time.perf_counter()
@@ -41,6 +50,7 @@ def test_unterminated_line_comments_are_not_quadratic():
     assert time.perf_counter() - started < 2.0
 
 
+@pytest.mark.no_cover
 def test_streaming_a_long_string_one_character_at_a_time_is_fast():
     from parse_broken_json import StreamParser
 
@@ -53,6 +63,7 @@ def test_streaming_a_long_string_one_character_at_a_time_is_fast():
     assert time.perf_counter() - started < 2.0
 
 
+@pytest.mark.no_cover
 def test_streaming_whitespace_one_character_at_a_time_is_fast():
     from parse_broken_json import StreamParser
 
