@@ -38,7 +38,9 @@ DEVIANT = [
     # Closing quotes missing before a key on the next line, or before its colon.
     '{\n  "a": "x,\n  "b": 1,\r\n  "c": "y\r\n  "d": "z, "e"\n  : 2\n}',
 ]
-DOCS = [VALID, *DEVIANT]
+# Valid JSON that is one string: the brackets inside it hold no values.
+STRING = json.dumps('see [1, 2] and {"a": [3]}')
+DOCS = [VALID, STRING, *DEVIANT]
 
 
 def leaves(value, path=()):
@@ -102,6 +104,23 @@ def test_values_appear_as_soon_as_they_are_decided():
         {"done": True, "text": "Once upon a time", "n": 12},
     ]
     assert parser.finish() == parse_broken_json_result(parser.text)
+
+
+def test_nothing_shows_while_the_text_may_be_one_string():
+    # Complete, valid JSON that is one string comes back as that string, so
+    # the array the scan sees inside it is not final while the text may be one.
+    parser = StreamParser(multiple="all")
+    for chunk in ['"see [1', ", 2]", '"', "  "]:
+        parser.feed(chunk)
+        assert not parser.snapshot().found
+    parser.feed("and more")  # no longer one string: what the scan found stands
+    assert parser.snapshot().value == [[1, 2]]
+    assert parser.finish() == parse_broken_json_result(parser.text, multiple="all")
+
+    parser = StreamParser()
+    parser.feed('"see [1, 2]"')
+    assert not parser.snapshot().found
+    assert parser.finish().value == "see [1, 2]"
 
 
 def test_bytes_chunks_may_split_a_multibyte_character():

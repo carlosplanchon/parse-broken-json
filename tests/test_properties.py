@@ -135,3 +135,21 @@ def test_broken_json_streamed_in_random_chunks_matches_one_shot(value, indent, e
         previous = cut
         parser.snapshot()
     assert parser.finish() == parse_broken_json_result(text)
+
+
+@settings(max_examples=300, deadline=None)
+@given(tricky_text | st.text(max_size=20), st.booleans(), st.data())
+def test_a_streamed_json_string_shows_nothing_before_the_end(value, ensure_ascii, data):
+    from parse_broken_json import StreamParser
+
+    # Valid JSON that is one string comes back as that string, so nothing the
+    # scan finds inside it may show up before the end of the stream.
+    text = json.dumps(value, ensure_ascii=ensure_ascii)
+    cuts = sorted(data.draw(st.lists(st.integers(min_value=0, max_value=len(text)), max_size=6)))
+    parser = StreamParser()
+    previous = 0
+    for cut in [*cuts, len(text)]:
+        parser.feed(text[previous:cut])
+        previous = cut
+        assert not parser.snapshot().found
+    assert parser.finish().value == value

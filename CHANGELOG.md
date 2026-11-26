@@ -20,6 +20,10 @@
   right after the newline left the comma in the string, or the key inside it.
 - Streaming a long run of whitespace takes linear time: each chunk made the
   parser scan the run again from its start.
+- While the text may still turn out to be a single JSON string, such as
+  `"see [1, 2]"`, the snapshots of `StreamParser` and `stream_stable=True`
+  hold nothing. They held what the scan found inside the string, which
+  vanished when the stream ended there and the string came back instead.
 
 ## 0.4.0 - 2026-10-03
 

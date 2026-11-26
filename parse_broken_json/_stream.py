@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import codecs
 import json
+import re
 from collections.abc import Iterable, Mapping
 from typing import Any, Literal
 
@@ -19,6 +20,21 @@ AllowedKeys = Iterable[str] | Mapping[str, Any] | None
 _Allowed = frozenset[str] | dict[str, Any] | None
 
 _BOM = "\N{ZERO WIDTH NO-BREAK SPACE}"
+
+# The parts of a JSON text that is one string, as json reads it: blanks around
+# the string and, between its quotes, characters other than '"', '\' and
+# control characters, or escapes.
+_JSON_BLANKS_RE = re.compile(r"[ \t\n\r]*")
+_JSON_STRING_BODY_RE = re.compile(r'(?:[^"\\\x00-\x1f]|\\["\\/bfnrt]|\\u[0-9a-fA-F]{4})*')
+# The start of an escape, as the end of the input may cut it.
+_JSON_ESCAPE_START_RE = re.compile(r"\\(?:u[0-9a-fA-F]{0,3})?")
+
+
+def _match_end(regex: re.Pattern[str], text: str, pos: int) -> int:
+    """Where ``regex``, which also matches the empty string, stops from ``pos``."""
+    match = regex.match(text, pos)
+    assert match is not None
+    return match.end()
 
 
 class _DuplicateKey(Exception):
@@ -84,6 +100,9 @@ class StreamParser:
     end of the stream and returns the final result, exactly as
     :func:`parse_broken_json_result` would for the whole text.
 
+    While the text may still turn out to be a single JSON string, the
+    snapshots hold nothing: once complete, it would come back as that string.
+
     The work done is linear in the stream: the parser suspends where it needs
     more input and resumes from there. Each snapshot copies the current value.
 
@@ -125,6 +144,8 @@ class StreamParser:
         self._decoder = codecs.getincrementaldecoder("utf-8")(errors="replace")
         self._first_chunk = True
         self._final: ParseResult | None = None
+        # How far the text reads as one JSON string; None once it cannot be one.
+        self._one_string: tuple[str, int] | None = ("before", 0)
 
     @property
     def text(self) -> str:
@@ -187,6 +208,35 @@ class StreamParser:
             value = [value]
         return ParseResult(self._finalize(value, fresh=True), True, True, True, 0, len(text), ())
 
+    def _may_still_be_one_string(self) -> bool:
+        """Whether the text so far may still turn out to be a single JSON string.
+
+        Complete, such a text is valid JSON and comes back as that string, so
+        the values the scan finds inside it are not final until the text can
+        no longer be one. Each call only reads what arrived since the last.
+        """
+        if self._one_string is None:
+            return False
+        part, pos = self._one_string
+        s, n = self._buffer.s, self._buffer.n
+        while True:
+            if part == "body":
+                pos = _match_end(_JSON_STRING_BODY_RE, s, pos)
+                if pos < n and s[pos] == '"':
+                    part, pos = "after", pos + 1
+                    continue
+                # The body goes on to the end, or to an escape cut by the end.
+                viable = pos == n or _JSON_ESCAPE_START_RE.fullmatch(s, pos) is not None
+            else:  # blanks, before the opening quote or after the closing one
+                pos = _match_end(_JSON_BLANKS_RE, s, pos)
+                if part == "before" and pos < n and s[pos] == '"':
+                    part, pos = "body", pos + 1
+                    continue
+                viable = pos == n
+            break
+        self._one_string = (part, pos) if viable else None
+        return viable
+
     def _result(self, *, eof: bool) -> ParseResult:
         text = self._buffer.s
         if eof or text.rstrip()[-1:] in ("}", "]"):
@@ -194,7 +244,9 @@ class StreamParser:
             if result is not None:
                 return result
         self._scan.advance()
-        found = self._scan.snapshot()
+        # Complete, the text could be valid JSON that is one string, which would
+        # come back instead of anything the scan found inside it.
+        found = [] if not eof and self._may_still_be_one_string() else self._scan.snapshot()
         if not found:
             if self._strict:
                 raise BrokenJSONError("no JSON value found", 0)
